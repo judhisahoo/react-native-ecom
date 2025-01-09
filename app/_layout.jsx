@@ -8,13 +8,15 @@ import CartScreen from '../screens/CartScreen';
 import MeScreen from '../screens/MeScreen';
 import SupportScreen from '../screens/SupportScreen';
 import { useNavigation } from 'expo-router';
+import { Provider } from 'react-redux';
+import store from '../store/store';
 
 const Tab = createBottomTabNavigator();
 
 const Layout = () => {
   const navigation = useNavigation();
   return (
-      
+      <Provider store={store} >
         <View style={styles.container}>
           <Header />
           <Tab.Navigator screenOptions={{ headerShown: false }}>
@@ -25,6 +27,7 @@ const Layout = () => {
           </Tab.Navigator>
           <Footer navigation={navigation}/>
         </View>
+      </Provider>    
   );
 };
 
