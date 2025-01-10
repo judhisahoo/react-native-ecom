@@ -1,27 +1,32 @@
 import React, { useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, Modal, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Modal, StyleSheet } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchCategories } from '../store/slices/categorySlice';
+import CategoryList from '../components/CategoryList'; // Import the new component
 
 const Header = () => {
   const [modalVisible, setModalVisible] = React.useState(false);
   const { data: categories, loading } = useSelector((state) => state.categories);
   const dispatch = useDispatch();
-  const [searchText, setSearchText] = React.useState("");
+  const [searchText, setSearchText] = React.useState('');
 
   useEffect(() => {
     dispatch(fetchCategories()); // Fetch categories on component mount
   }, [dispatch]);
 
   const showCategoryModel = () => {
-    console.log('categories ::', categories.length); // Debugging
+    console.log('categories ::', categories); // Debugging
     setModalVisible(true); // Show the modal
   };
 
   const handleCategorySelect = (category) => {
-    setModalVisible(false); // Close the modal
-    alert(`Selected Category: ${category.name}`);
+    //setModalVisible(false); // Close the modal
+    alert(`Selected Category: ${category.id}`);
   };
+
+  const handleCloseModel = () =>{
+    setModalVisible(false);
+  }
 
   return (
     <View style={styles.header}>
@@ -44,24 +49,13 @@ const Header = () => {
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modal}>
           {categories.length > 0 ? (
-            <FlatList
-              data={categories}
-              keyExtractor={(item, index) => item.id || index.toString()} // Ensure unique keys
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  onPress={() => handleCategorySelect(item)}
-                  style={styles.categoryItem}
-                >
-                  <Text>{item.name}</Text>
-                </TouchableOpacity>
-              )}
-            />
+            <CategoryList categories={categories} onSelect={handleCategorySelect} onPress={()=>handleCloseModel()}/>
           ) : (
             <Text style={styles.noDataText}>No Categories Available</Text>
           )}
-          <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeButton}>
+          {/*<TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeButton}>
             <Text style={styles.closeButtonText}>Close</Text>
-          </TouchableOpacity>
+          </TouchableOpacity>*/}
         </View>
       </Modal>
     </View>
@@ -82,13 +76,9 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    paddingHorizontal: 20,
-  },
-  categoryItem: {
-    padding: 15,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    /*paddingHorizontal: 40,*/
+    paddingRight:150,
+    paddingLeft:10,
   },
   noDataText: {
     color: '#fff',
@@ -109,7 +99,7 @@ const styles = StyleSheet.create({
   searchBox: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: '#ddd',
     borderRadius: 5,
     paddingHorizontal: 10,
     marginLeft: 10,
