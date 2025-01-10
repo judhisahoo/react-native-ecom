@@ -1,0 +1,511 @@
+i am working one react native ecommerce project with EXPO, source code structure as bellow.
+api/axios.client.js
+api/endpoints.js
+app/index.jsx
+app/_layout.jsx
+components/Footer.jsx
+components/Header.jsx
+screen/CartScreen.jsx
+screen/Mycreen.jsx
+screen/SupportScreen.jsx
+screen/HomeScreen.jsx
+store/store.js
+store/slices/userSlice.js
+store/slices/cartSlice.js
+store/slices/categorySlice.js
+
+there is no index.js or index.jsx or app.js or app.jsx in root of the project.
+application running with app/index.jsx source code as bellow.
+
+import React from 'react';
+import { Provider } from 'react-redux';
+import store from '../store/store';
+import Layout from './_layout'; // Import Layout as the main component
+
+export default function App() {
+  return (
+    <Provider store={store}>
+      <Layout />
+    </Provider>
+  );
+}
+
+i am attaching app/_layout.jsx source code as bellow here.
+
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import HomeScreen from '../screens/HomeScreen';
+import CartScreen from '../screens/CartScreen';
+import MeScreen from '../screens/MeScreen';
+import SupportScreen from '../screens/SupportScreen';
+import { useNavigation } from 'expo-router';
+
+const Tab = createBottomTabNavigator();
+
+const Layout = () => {
+  const navigation = useNavigation();
+  return (
+      
+        <View style={styles.container}>
+          <Header />
+          <Tab.Navigator screenOptions={{ headerShown: false }}>
+            <Tab.Screen name="Home" component={HomeScreen} />
+            <Tab.Screen name="Cart" component={CartScreen} />
+            <Tab.Screen name="Me" component={MeScreen} />
+            <Tab.Screen name="Support" component={SupportScreen} />
+          </Tab.Navigator>
+          <Footer navigation={navigation}/>
+        </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
+
+export default Layout;
+
+i am also attaching store/store.js source code here
+
+import { configureStore } from '@reduxjs/toolkit';
+
+import cartReducer from './slices/cartSlice';
+import userReducer from './slices/userSlice';
+import categoryReducer from './slices/categorySlice';
+
+const store = configureStore({
+  reducer: {
+    cart: cartReducer,
+    user: userReducer,
+    categories: categoryReducer,
+  },
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware(), // Use Redux Toolkit's default middleware
+});
+
+export default store;
+
+now i am getting error while running npx expo start -c
+
+(NOBRIDGE) ERROR  Warning: Error: could not find react-redux context value; please ensure the component is wrapped in a <Provider>
+
+This error is located at:
+    in Header (created by Layout)
+    in RCTView (created by View)
+    in View (created by Layout)
+    in Layout
+    in Unknown (created by Route())
+    in Suspense (created by Route())
+    in Route (created by Route())
+    in Route() (created by ContextNavigator)
+    in RNCSafeAreaProvider (created by SafeAreaProvider)
+    in SafeAreaProvider (created by wrapper)
+    in wrapper (created by ContextNavigator)
+ 
+
+Now run time errors has resolved.
+But one app opening when click on category icon in header section it is opening a model with blackground with out any data.
+i have change little code in Header.jsx. handle Category Icon click end but not getting category array not data. change source code are bellow.
+import React, { useEffect } from 'react';
+import { View, Text, TouchableOpacity, FlatList, Modal, StyleSheet } from 'react-native';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchCategories } from '../store/slices/categorySlice';
+
+const Header = () => {
+  const [modalVisible, setModalVisible] = React.useState(false);
+  const { data: categories, loading } = useSelector((state) => state.categories);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(fetchCategories());
+  }, [dispatch]);
+
+  const showCategorymodel =() =>{
+    console.log('categories ::',categories);
+    //setModalVisible(true);
+  }
+
+  const handleCategorySelect = (category) => {
+    setCategoryVisible(false);
+    alert(`Selected Category: ${category}`);
+  };
+  
+  return (
+    <View style={styles.header}>
+      <TouchableOpacity onPress={() => showCategorymodel()}>
+        <Text style={styles.icon}>☰</Text>
+      </TouchableOpacity>
+
+      {loading && <Text>Loading...</Text>}
+
+      <Modal visible={modalVisible} transparent animationType="slide">
+        <View style={styles.modal}>
+          <FlatList
+            data={categories}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity onPress={() => handleCategorySelect(item)} style={styles.categoryItem}>
+                <Text>{item.name}</Text>
+              </TouchableOpacity>
+            )}
+          />
+          <TouchableOpacity onPress={() => setCategoryVisible(false)} style={styles.closeButton}>
+            <Text>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  header: {
+    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  icon: { fontSize: 20 },
+  modal: { flex: 1, justifyContent: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
+  categoryItem: { padding: 10, backgroundColor: '#fff', marginBottom: 5 },
+});
+
+export default Header;
+please help to show category list
+
+i am attaching Header.jsx code as bellow.
+
+import React, { useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, FlatList, Modal, StyleSheet } from 'react-native';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchCategories } from '../store/slices/categorySlice';
+
+const Header = () => {
+  const [modalVisible, setModalVisible] = React.useState(false);
+  const { data: categories, loading } = useSelector((state) => state.categories);
+  const dispatch = useDispatch();
+  const [searchText, setSearchText] = React.useState("");
+
+  useEffect(() => {
+    dispatch(fetchCategories()); // Fetch categories on component mount
+  }, [dispatch]);
+
+  const showCategoryModel = () => {
+    console.log('categories ::', categories.length); // Debugging
+    setModalVisible(true); // Show the modal
+  };
+
+  const handleCategorySelect = (category) => {
+    setModalVisible(false); // Close the modal
+    alert(`Selected Category: ${category.name}`);
+  };
+
+  return (
+    <View style={styles.header}>
+      {/* Category Icon */}
+      <TouchableOpacity onPress={showCategoryModel}>
+        <Text style={styles.icon}>☰</Text>
+      </TouchableOpacity>
+
+      {/* Search Box */}
+      <TextInput
+        style={styles.searchBox}
+        placeholder="Search"
+        value={searchText}
+        onChangeText={setSearchText}
+      />
+
+      {loading && <Text>Loading...</Text>}
+
+      {/* Modal for Categories */}
+      <Modal visible={modalVisible} transparent animationType="slide">
+        <View style={styles.modal}>
+          {categories.length > 0 ? (
+            <FlatList
+              data={categories}
+              keyExtractor={(item, index) => item.id || index.toString()} // Ensure unique keys
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => handleCategorySelect(item)}
+                  style={styles.categoryItem}
+                >
+                  <Text>{item.name}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          ) : (
+            <Text style={styles.noDataText}>No Categories Available</Text>
+          )}
+          <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeButton}>
+            <Text style={styles.closeButtonText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  header: {
+    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f8f8',
+  },
+  icon: {
+    fontSize: 20,
+  },
+  modal: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: 20,
+  },
+  categoryItem: {
+    padding: 15,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  noDataText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 18,
+  },
+  closeButton: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    borderRadius: 5,
+  },
+  closeButtonText: {
+    color: '#007BFF',
+    fontWeight: 'bold',
+  },
+  searchBox: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginLeft: 10,
+  },
+});
+
+export default Header;
+
+now i want two more feature.
+1)now i want make separate component for category data and will implement in modal at header section.
+2) i want show two level category side menu on the base of bellow data.
+
+
+[
+  {
+    "id": 1,
+    "parent_id": 0,
+    "name": "Dicta",
+    "description": "Cum qui omnis nobis ipsam magnam est. Qui voluptatem optio velit. Labore sunt ut qui molestiae sit et voluptas accusamus. Similique dignissimos fugit vel illo consequatur.",
+    "created_at": "2025-01-08T17:05:41.000000Z",
+    "updated_at": "2025-01-08T17:05:41.000000Z",
+    "children": [
+      {
+        "id": 23,
+        "parent_id": 1,
+        "name": "Et",
+        "description": "Modi est nam temporibus aspernatur eos doloremque. Qui excepturi officia sapiente incidunt omnis. Voluptatem est veritatis modi. Quam vel et ratione aliquid aut quod magnam facere.",
+        "created_at": "2025-01-08T18:07:44.000000Z",
+        "updated_at": "2025-01-08T18:07:44.000000Z"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "parent_id": 0,
+    "name": "Suscipit",
+    "description": "Et hic sunt cupiditate non. Et in quas natus unde unde. Veritatis iusto minima nobis quas. Ratione quis reprehenderit molestiae fugiat. Omnis pariatur expedita qui.",
+    "created_at": "2025-01-08T17:05:41.000000Z",
+    "updated_at": "2025-01-08T17:05:41.000000Z",
+    "children": [
+      {
+        "id": 11,
+        "parent_id": 2,
+        "name": "Consequatur",
+        "description": "Voluptatibus et itaque sint. Modi ut molestiae libero repellat rerum molestias et ab. Labore esse voluptas labore excepturi id ea aut.",
+        "created_at": "2025-01-08T18:07:44.000000Z",
+        "updated_at": "2025-01-08T18:07:44.000000Z"
+      },
+      {
+        "id": 13,
+        "parent_id": 2,
+        "name": "Magni",
+        "description": "Qui fugiat esse consectetur quis. Maiores accusantium iusto fuga expedita. Aspernatur voluptas numquam est nemo eos modi. Et dolorem qui similique aut dolorum facilis rerum.",
+        "created_at": "2025-01-08T18:07:44.000000Z",
+        "updated_at": "2025-01-08T18:07:44.000000Z"
+      },
+      {
+        "id": 22,
+        "parent_id": 2,
+        "name": "Natus",
+        "description": "Quo minus ut voluptates cupiditate ullam. Sunt odio laborum omnis numquam sit a. Ducimus magnam et magni repudiandae rerum qui ea temporibus.",
+        "created_at": "2025-01-08T18:07:44.000000Z",
+        "updated_at": "2025-01-08T18:07:44.000000Z"
+      },
+      {
+        "id": 27,
+        "parent_id": 2,
+        "name": "Ut",
+        "description": "Quis voluptatem ab unde et et dolor velit. Commodi in provident provident rem. Corrupti omnis laudantium ut modi autem cum non. Inventore vel asperiores nemo eligendi iste error quo blanditiis.",
+        "created_at": "2025-01-08T18:07:44.000000Z",
+        "updated_at": "2025-01-08T18:07:44.000000Z"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "parent_id": 0,
+    "name": "Expedita",
+    "description": "Minima recusandae natus sunt. Doloribus fuga ullam aspernatur ea rerum neque quo. Beatae reprehenderit possimus et rerum dignissimos itaque. Numquam incidunt ducimus sed est minus officiis neque.",
+    "created_at": "2025-01-08T18:03:18.000000Z",
+    "updated_at": "2025-01-08T18:03:18.000000Z",
+    "children": [
+      {
+        "id": 9,
+        "parent_id": 3,
+        "name": "Quia",
+        "description": "Et ab ut qui. Neque qui atque soluta. Quis aspernatur officiis dolores ipsam ex voluptate. Aut eligendi error sit veniam. Sed quia autem neque asperiores commodi fuga est.",
+        "created_at": "2025-01-08T18:07:44.000000Z",
+        "updated_at": "2025-01-08T18:07:44.000000Z"
+      },
+      {
+        "id": 18,
+        "parent_id": 3,
+        "name": "Praesentium",
+        "description": "Qui recusandae consectetur rem sed minima. Laboriosam pariatur quasi adipisci et. Sunt explicabo est quis aut odio voluptas. Illum quod qui vitae dolorum. Quo excepturi cupiditate est non ex a et.",
+        "created_at": "2025-01-08T18:07:44.000000Z",
+        "updated_at": "2025-01-08T18:07:44.000000Z"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "parent_id": 0,
+    "name": "Perspiciatis",
+    "description": "Qui officiis tempora sint reprehenderit qui nemo ipsa et. Ipsum cum dolor hic aut. Maiores ut fugit esse maiores vitae quia. Aut ipsa commodi sunt consequatur autem eos.",
+    "created_at": "2025-01-08T18:03:18.000000Z",
+    "updated_at": "2025-01-08T18:03:18.000000Z",
+    "children": [
+      {
+        "id": 17,
+        "parent_id": 4,
+        "name": "Sint",
+        "description": "Quaerat cumque voluptatibus consequuntur deleniti nihil. Cum ipsa doloribus et molestiae. Consequatur optio maxime ipsum molestiae voluptates sunt facere alias.",
+        "created_at": "2025-01-08T18:07:44.000000Z",
+        "updated_at": "2025-01-08T18:07:44.000000Z"
+      },
+      {
+        "id": 20,
+        "parent_id": 4,
+        "name": "Autem",
+        "description": "Doloremque enim sint impedit voluptates optio asperiores illo. Sed et quibusdam optio itaque deserunt sit sapiente. Vel temporibus magni tempora harum quidem. Rerum in non aut rerum rem.",
+        "created_at": "2025-01-08T18:07:44.000000Z",
+        "updated_at": "2025-01-08T18:07:44.000000Z"
+      },
+      {
+        "id": 25,
+        "parent_id": 4,
+        "name": "Minus",
+        "description": "Eos nisi vel assumenda cupiditate modi. Dolorum suscipit et autem nostrum distinctio eveniet voluptatem.",
+        "created_at": "2025-01-08T18:07:44.000000Z",
+        "updated_at": "2025-01-08T18:07:44.000000Z"
+      },
+      {
+        "id": 26,
+        "parent_id": 4,
+        "name": "Rerum",
+        "description": "Iure officiis nisi sit ut. Consequatur repellat dolores nam molestiae laudantium dolore est. Ut quia ad odit ut libero.",
+        "created_at": "2025-01-08T18:07:44.000000Z",
+        "updated_at": "2025-01-08T18:07:44.000000Z"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "parent_id": 0,
+    "name": "Iste",
+    "description": "Incidunt suscipit blanditiis vero dolorum id voluptatem eum aut. Sunt modi fuga voluptatem quia. Illum voluptatem ut consequatur ipsam occaecati.",
+    "created_at": "2025-01-08T18:05:18.000000Z",
+    "updated_at": "2025-01-08T18:05:18.000000Z",
+    "children": [
+      {
+        "id": 8,
+        "parent_id": 5,
+        "name": "Consequatur",
+        "description": "Facilis alias in minus. Cupiditate aspernatur quam veniam voluptatum fugiat. Sit placeat dolor nobis sequi magnam.",
+        "created_at": "2025-01-08T18:07:44.000000Z",
+        "updated_at": "2025-01-08T18:07:44.000000Z"
+      },
+      {
+        "id": 10,
+        "parent_id": 5,
+        "name": "Laboriosam",
+        "description": "Ut vel nobis pariatur dolorum et in. Voluptate dolor voluptates quia fuga. Numquam quam voluptatem ea est aut adipisci consequatur.",
+        "created_at": "2025-01-08T18:07:44.000000Z",
+        "updated_at": "2025-01-08T18:07:44.000000Z"
+      },
+      {
+        "id": 14,
+        "parent_id": 5,
+        "name": "Nulla",
+        "description": "Hic repellat voluptates possimus mollitia sunt tempore. Qui excepturi beatae consequuntur aliquam necessitatibus quaerat quia. Aliquam cupiditate sequi voluptatem ut consequatur aut commodi qui.",
+        "created_at": "2025-01-08T18:07:44.000000Z",
+        "updated_at": "2025-01-08T18:07:44.000000Z"
+      },
+      {
+        "id": 19,
+        "parent_id": 5,
+        "name": "Quam",
+        "description": "Perferendis molestias dignissimos modi expedita omnis quia quidem. Ut maiores non voluptatibus est quis aliquam quas hic. Esse est est dolor praesentium maxime.",
+        "created_at": "2025-01-08T18:07:44.000000Z",
+        "updated_at": "2025-01-08T18:07:44.000000Z"
+      },
+      {
+        "id": 21,
+        "parent_id": 5,
+        "name": "Qui",
+        "description": "Quia ad quibusdam maiores aliquid dolor reiciendis. Enim nisi quia consectetur aspernatur dolor ex debitis non. Eveniet consequatur necessitatibus rerum.",
+        "created_at": "2025-01-08T18:07:44.000000Z",
+        "updated_at": "2025-01-08T18:07:44.000000Z"
+      },
+      {
+        "id": 24,
+        "parent_id": 5,
+        "name": "Et",
+        "description": "Corporis minima dolorum et occaecati ex ex reprehenderit deleniti. Velit nobis nisi sed. Recusandae consequatur ex ut aut. Modi ad qui quod quia labore est.",
+        "created_at": "2025-01-08T18:07:44.000000Z",
+        "updated_at": "2025-01-08T18:07:44.000000Z"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "parent_id": 0,
+    "name": "Consequatur",
+    "description": "Nisi adipisci accusamus dolor est sapiente. Perspiciatis quibusdam commodi et est. Numquam enim sint aliquam omnis labore et. Esse ipsam et cum dolorem temporibus non qui.",
+    "created_at": "2025-01-08T18:05:18.000000Z",
+    "updated_at": "2025-01-08T18:05:18.000000Z",
+    "children": [
+      {
+        "id": 16,
+        "parent_id": 6,
+        "name": "Ad",
+        "description": "Consequuntur sequi non officiis et. Enim velit dolore autem magnam. Quis aliquam non aut rerum asperiores impedit enim magni.",
+        "created_at": "2025-01-08T18:07:44.000000Z",
+        "updated_at": "2025-01-08T18:07:44.000000Z"
+      }
+    ]
+  }
+]

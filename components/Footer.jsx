@@ -1,21 +1,45 @@
-import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import MeActionSheet from '../components/MeActionSheet';
+import SupportActionSheet from '../components/SupportActionSheet';
 
 const Footer = ({ navigation }) => {
+  const meActionSheetRef = useRef(null); // Reference for "Me" action sheet
+  const supportActionSheetRef = useRef(null); // Reference for "Support" action sheet
+
+  const openMeActionSheet = () => {
+    meActionSheetRef.current?.setModalVisible(); // Open "Me" action sheet
+  };
+
+  const openSupportActionSheet = () => {
+    supportActionSheetRef.current?.setModalVisible(); // Open "Support" action sheet
+  };
+
   return (
     <View style={styles.footer}>
-      <TouchableOpacity onPress={() => navigation.navigate('Home')}>
-        <Text>Home</Text>
+      {/* Home Tab */}
+      <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.tab}>
+        <Text style={styles.tabText}>Home</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate('Cart')}>
-        <Text>Cart</Text>
+
+      {/* Cart Tab */}
+      <TouchableOpacity onPress={() => navigation.navigate('Cart')} style={styles.tab}>
+        <Text style={styles.tabText}>Cart</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate('Me')}>
-        <Text>Me</Text>
+
+      {/* Me Tab */}
+      <TouchableOpacity onPress={openMeActionSheet} style={styles.tab}>
+        <Text style={styles.tabText}>Me</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate('Support')}>
-        <Text>Support</Text>
+
+      {/* Support Tab */}
+      <TouchableOpacity onPress={openSupportActionSheet} style={styles.tab}>
+        <Text style={styles.tabText}>Support</Text>
       </TouchableOpacity>
+
+      {/* Include the Action Sheets */}
+      <MeActionSheet ref={meActionSheetRef} />
+      <SupportActionSheet ref={supportActionSheetRef} />
     </View>
   );
 };
@@ -24,8 +48,18 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    alignItems: 'center',
+    backgroundColor: '#f8f8f8',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#ddd',
+  },
+  tab: {
     padding: 10,
-    backgroundColor: '#f0f0f0',
+  },
+  tabText: {
+    fontSize: 16,
+    color: '#007BFF',
   },
 });
 

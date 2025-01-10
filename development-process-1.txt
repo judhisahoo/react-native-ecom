@@ -1,0 +1,444 @@
+i have changed _layout.jsx code as bellow.
+--------------------------------------------
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import HomeScreen from '../screens/HomeScreen';
+import CartScreen from '../screens/CartScreen';
+import MeScreen from '../screens/MeScreen';
+import SupportScreen from '../screens/SupportScreen';
+import { useNavigation } from 'expo-router';
+
+const Tab = createBottomTabNavigator();
+
+const Layout = () => {
+  const navigation = useNavigation();
+  return (
+      <NavigationContainer>
+        <View style={styles.container}>
+          <Header />
+          <Tab.Navigator screenOptions={{ headerShown: false }}>
+            <Tab.Screen name="Home" component={HomeScreen} />
+            <Tab.Screen name="Cart" component={CartScreen} />
+            <Tab.Screen name="Me" component={MeScreen} />
+            <Tab.Screen name="Support" component={SupportScreen} />
+          </Tab.Navigator>
+          <Footer navigation={navigation}/>
+        </View>
+      </NavigationContainer>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
+
+i have change index.jsx code as bellow.
+-----------
+import Layout from './_layout';
+
+export default function App() {
+  return <Layout />;
+}
+
+but still getting bellow error
+ (NOBRIDGE) ERROR  Warning: Error: Looks like you have nested a 'NavigationContainer' inside another. Normally you need only one container at the root of the app, so this was probably an error. If this was intentional, wrap the container in 'NavigationIndependentTree' explicitly. Note that this will make the child navigators disconnected from the parent and you won't be able to navigate between them.
+
+
+export default Layout;
+
+
+------------------------------------------
+i have axios library to acces data from api server. i have create 
+
+-----------------------------------
+
+Couple  of days ago i wans ask for help regarding same kind of project. You provide bellow code for categorySlice.js
+
+import { createSlice } from '@reduxjs/toolkit';
+
+const categorySlice = createSlice({
+  name: 'category',
+  initialState: {
+    categories: [],
+    selectedCategory: 'All Categories',
+  },
+  reducers: {
+    setCategory: (state, action) => {
+      state.selectedCategory = action.payload;
+    },
+  },
+});
+
+export const { setCategory } = categorySlice.actions;
+export default categorySlice.reducer;
+
+ and today provided bellow categorySlice.js Code.
+
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+
+// Fetch categories from an API
+export const fetchCategories = createAsyncThunk('categories/fetch', async () => {
+  const response = await fetch('https://api.example.com/categories');
+  return await response.json();
+});
+
+const categorySlice = createSlice({
+  name: 'categories',
+  initialState: {
+    data: [],
+    loading: false,
+  },
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchCategories.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchCategories.fulfilled, (state, action) => {
+        state.data = action.payload;
+        state.loading = false;
+      })
+      .addCase(fetchCategories.rejected, (state) => {
+        state.loading = false;
+      });
+  },
+});
+
+export default categorySlice.reducer;
+
+can you help me know different between two source code and last time you provided setCatgory under reducer but now it is not why it not required now?
+--------------------------
+
+
+Couple  of days ago i wans ask for help regarding same kind of project. You provide bellow code for userSlice.js
+
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import axiosClient from '../../api/axios.client';
+import endpoints from '../../api/endpoints';
+
+// Async thunk for user login
+export const loginUser = createAsyncThunk('user/login', async (credentials, { rejectWithValue }) => {
+  try {
+    const response = await axiosClient.post(endpoints.UserSignIN, credentials);
+    // Assuming API returns a token and user details
+    const { token, userDetails } = response.data;
+    localStorage.setItem('ACCESS_TOKEN', token);
+    return { token, userDetails };
+  } catch (error) {
+    return rejectWithValue(error.response?.data || error.message);
+  }
+});
+
+// Async thunk for user registration
+export const registerUser = createAsyncThunk('user/register', async (userData, { rejectWithValue }) => {
+  try {
+    const response = await axiosClient.post(endpoints.UserSignUp, userData);
+    return response.data; // Assuming the response contains success message
+  } catch (error) {
+    return rejectWithValue(error.response?.data || error.message);
+  }
+});
+
+// Async thunk to update user information
+export const updateUser = createAsyncThunk('user/update', async (userData, { rejectWithValue }) => {
+  try {
+    const response = await axiosClient.put(endpoints.UserUpdate, userData);
+    return response.data; // Assuming the response contains updated user details
+  } catch (error) {
+    return rejectWithValue(error.response?.data || error.message);
+  }
+});
+
+// Async thunk to fetch user information
+export const fetchUserInfo = createAsyncThunk('user/fetchInfo', async (_, { rejectWithValue }) => {
+  try {
+    const response = await axiosClient.get(endpoints.UserInfo);
+    return response.data; // Assuming the response contains user details
+  } catch (error) {
+    return rejectWithValue(error.response?.data || error.message);
+  }
+});
+
+const userSlice = createSlice({
+  name: 'user',
+  initialState: {
+    isLoggedIn: false,
+    userDetails: null,
+    token: null,
+    loading: false,
+    error: null,
+  },
+  reducers: {
+    logout: (state) => {
+      state.isLoggedIn = false;
+      state.userDetails = null;
+      state.token = null;
+      localStorage.removeItem('ACCESS_TOKEN');
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      // Handle login
+      .addCase(loginUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.isLoggedIn = true;
+        state.token = action.payload.token;
+        state.userDetails = action.payload.userDetails;
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Handle registration
+      .addCase(registerUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.loading = false;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Handle user update
+      .addCase(updateUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.userDetails = action.payload;
+      })
+      .addCase(updateUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Handle fetch user info
+      .addCase(fetchUserInfo.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchUserInfo.fulfilled, (state, action) => {
+        state.loading = false;
+        state.userDetails = action.payload;
+      })
+      .addCase(fetchUserInfo.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+  },
+});
+
+export const { logout } = userSlice.actions;
+export default userSlice.reducer;
+
+ and today provided bellow userSlice.js Code.
+
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+
+// Thunks for async operations
+export const loginUser = createAsyncThunk('user/login', async (userData) => {
+  const response = await fetch('https://api.example.com/login', {
+    method: 'POST',
+    body: JSON.stringify(userData),
+    headers: { 'Content-Type': 'application/json' },
+  });
+  return await response.json();
+});
+
+export const registerUser = createAsyncThunk('user/register', async (userData) => {
+  const response = await fetch('https://api.example.com/register', {
+    method: 'POST',
+    body: JSON.stringify(userData),
+    headers: { 'Content-Type': 'application/json' },
+  });
+  return await response.json();
+});
+
+const userSlice = createSlice({
+  name: 'user',
+  initialState: {
+    user: null,
+    isAuthenticated: false,
+    loading: false,
+  },
+  reducers: {
+    logout: (state) => {
+      state.user = null;
+      state.isAuthenticated = false;
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(loginUser.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.user = action.payload;
+        state.isAuthenticated = true;
+        state.loading = false;
+      })
+      .addCase(loginUser.rejected, (state) => {
+        state.loading = false;
+      })
+      .addCase(registerUser.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.user = action.payload;
+        state.isAuthenticated = true;
+        state.loading = false;
+      })
+      .addCase(registerUser.rejected, (state) => {
+        state.loading = false;
+      });
+  },
+});
+
+export const { logout } = userSlice.actions;
+export default userSlice.reducer;
+
+can you help me know different between two source code and now i am not getting token data handle in userSlice.js it is not necessary here?
+as i know react native using secure storage library instead of localstorage. plz help me about storage the token and user data.
+-----------------------------
+
+please help me updated code latest code @react-native-secure-storage/secure-storage and implement my axiosClient.js instead of fetch api. i want also userupdate functionality as it will call put method.
+
+-----------------------------
+
+My axiosClient.js i am already using Authorization header. i think in userSlice API call section that not needed. So need some code clean in the userSlice.js file Second in axiosClient.js code as bellow 
+
+import axios from "axios";
+import Config from "react-native-config";
+
+const BASE_URL = Config.API_BASE_URL;
+
+const axiosClient = axios.create({
+    baseURL: `${BASE_URL}/api`,
+});
+
+axiosClient.interceptors.request.use((AxiosRequestConfig) => {
+    const token = localStorage.getItem("ACCESS_TOKEN");
+    AxiosRequestConfig.headers.Authorization = `Bearer ${token}`;
+    if (
+        AxiosRequestConfig.method == "post" ||
+        AxiosRequestConfig.method == "put"
+    ) {
+        AxiosRequestConfig.headers["Content-Type"] = "multipart/form-data";
+    }
+    return AxiosRequestConfig;
+});
+
+axiosClient.interceptors.response.use((response) => {
+    return response
+  }, (error) => {
+    const {response} = error;
+    if (response.status === 401) {
+      localStorage.removeItem('ACCESS_TOKEN')
+      // window.location.reload();
+    } else if (response.status === 404) {
+      //Show not found
+    }
+  
+    throw error;
+  })
+
+export default axiosClient;
+
+ also need to optimize regarding implement of @react-native-secure-storage/secure-storage instead of local storage
+
+-------------------------------------------------------
+i need some some more help on the bellow suggestion.
+Integration into App
+Wrap App with Redux Provider
+Update main.js or app.jsx to include the Provider.
+
+in my current project structure there is no main.js or app.jsx.
+there two root file one app/index.jsx and one is app/_layout.jsx.
+
+please help me to implement Redux Provider
+-----------------------------------------
+
+before redux implement application working fine for _layout.jsx source code as bellow.
+
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import HomeScreen from '../screens/HomeScreen';
+import CartScreen from '../screens/CartScreen';
+import MeScreen from '../screens/MeScreen';
+import SupportScreen from '../screens/SupportScreen';
+import { useNavigation } from 'expo-router';
+
+const Tab = createBottomTabNavigator();
+
+const Layout = () => {
+  const navigation = useNavigation();
+  return (
+      
+        <View style={styles.container}>
+          <Header />
+          <Tab.Navigator screenOptions={{ headerShown: false }}>
+            <Tab.Screen name="Home" component={HomeScreen} />
+            <Tab.Screen name="Cart" component={CartScreen} />
+            <Tab.Screen name="Me" component={MeScreen} />
+            <Tab.Screen name="Support" component={SupportScreen} />
+          </Tab.Navigator>
+          <Footer navigation={navigation}/>
+        </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
+
+export default Layout;
+
+and index.jsx source code as bellow.
+
+import Layout from './_layout';
+
+export default function App() {
+  return <Layout />;
+}
+
+my whole code structure as bellow
+
+api/axios.client.js
+api/endpoints.js
+app/index.jsx
+app/_layout.jsx
+components/Footer.jsx
+components/Header.jsx
+screen/CartScreen.jsx
+screen/Mycreen.jsx
+screen/SupportScreen.jsx
+screen/HomeScreen.jsx
+store/store.js
+store/slices/userSlice.js
+store/slices/cartSlice.js
+store/slices/categorySlice.js
+
+please help me to implement Redux Provider
+
+
+while installing react-native-secure-storage/secure-storage package getting npm error code E404. plz implement expo-secure-store and show me the update code of userSlice.js nd axios.client.js
